@@ -18,6 +18,7 @@ IOBuf: module
 		sep:		array of byte;
 		strip:		int;
 		reader:		ref fn(r: ref ReadBuf): int;
+		is_eof:		int;
 		fd:		ref Sys->FD;
 		leftover:	array of byte;
 		queue:		chan of array of byte;

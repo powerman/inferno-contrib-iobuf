@@ -20,6 +20,7 @@ ReadBuf.new(fd: ref Sys->FD, bufsize: int): ref ReadBuf
 	r.setsep("\n", 1);
 	r.fd		= fd;
 	r.reader	= sysread;
+	r.is_eof	= 0;
 	return r;
 }
 
@@ -35,10 +36,11 @@ ReadBuf.newc(queuesize, bufsize: int): ref ReadBuf
 
 ReadBuf.setsep(r: self ref ReadBuf, sep: string, strip: int)
 {
+	if(sep == nil)
+		raise "iobuf:empty separator";
 	r.sep	= array of byte sep;
 	r.strip	= strip;
 }
-
 
 ReadBuf.reads(r: self ref ReadBuf): array of byte
 {
@@ -47,6 +49,15 @@ ReadBuf.reads(r: self ref ReadBuf): array of byte
 	c := r.sep[0];
 
 	for(;;){
+		if(r.is_eof)
+			if(r.s == r.e)
+				return nil;
+			else{
+				s := r.s;
+				r.s = r.e;
+				return r.buf[s:r.e];
+			}
+
 		for(i := r.s; i < r.e; i++)
 			if(r.buf[i] == c){
 				s := r.s;
@@ -63,7 +74,7 @@ ReadBuf.reads(r: self ref ReadBuf): array of byte
 			raise "iobuf:no separator found in full buffer";
 		
 		if(r.reader(r) == 0)
-			return nil;
+			r.is_eof = 1;
 	}
 }
 
@@ -111,8 +122,12 @@ chanread(r: ref ReadBuf): int
 			;
 		}
 		<-r.is_pending;
-		wc <-= (n, nil);
-		return bufread(r, buf);
+		if(wc != nil)
+			wc <-= (n, nil);
+		if(buf == nil)
+			return 0;
+		else
+			return bufread(r, buf);
 	}
 }
 
@@ -165,15 +180,19 @@ ReadBuf.fill(r: self ref ReadBuf, data: array of byte, wc: Sys->Rwrite)
 		<-r.is_pending;
 		alt{
 		r.queue <-= data =>
-			wc <-= (len data, nil);
+			if(wc != nil)
+				wc <-= (len data, nil);
 		* =>
 			r.is_pending <-= 1;
 			r.pending <-= (data, wc);
 		}
 	* =>
-		wc <-= (0, "concurrent writes not supported");
+		if(wc != nil)
+			wc <-= (0, "concurrent writes not supported");
 	}
 }
+
+#
 
 WriteBuf.new(fd: ref Sys->FD, bufsize: int): ref WriteBuf
 {
