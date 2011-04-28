@@ -1,0 +1,17 @@
+<../../../mkconfig
+
+TARG=\
+
+TESTS=\
+	smoke.dis\
+
+SYSMODULES=\
+	sys.m\
+	draw.m\
+	arg.m\
+
+MODULES=\
+	../../../module/iobuf.m\
+
+<../../../../tap/mktest
+LIMBOFLAGS=$LIMBOFLAGS -I$INFERNO_HOME

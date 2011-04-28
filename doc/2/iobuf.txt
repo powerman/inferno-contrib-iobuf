@@ -1,0 +1,179 @@
+IOBUF(2)
+========
+
+== NAME
+
+iobuf - read/write buffers
+
+
+== SYNOPSIS
+
+----
+include "iobuf.m";
+	iobuf: IOBuf;
+	ReadBuf, WriteBuf: import iobuf;
+iobuf = load IOBuf IOBuf->PATH;
+
+init: fn();
+
+ReadBuf: adt{
+	new:		fn(fd: ref Sys->FD, bufsize: int): ref ReadBuf;
+	newc:		fn(queuesize, bufsize: int): ref ReadBuf;
+	setsep:		fn(r: self ref ReadBuf, sep: string, strip: int);
+	reads:		fn(r: self ref ReadBuf): array of byte;
+	readn:		fn(r: self ref ReadBuf, n: int): array of byte;
+	fill:		fn(r: self ref ReadBuf, data: array of byte, wc: Sys->Rwrite);
+}
+
+WriteBuf: adt{
+	new:		fn(fd: ref Sys->FD, bufsize: int): ref WriteBuf;
+	newc:		fn(bufsize: int): ref WriteBuf;
+	write:		fn(w: self ref WriteBuf, buf: array of byte);
+	flush:		fn(w: self ref WriteBuf);
+	request:	fn(w: self ref WriteBuf, n: int, rc: Sys->Rread);
+}
+----
+
+
+== DESCRIPTION
+
+This module provide simpler alternative to bufio(2).
+
+*init* must be called before invoking any other operation of the module.
+
+=== ReadBuf
+
+ReadBuf is used when we receive stream of bytes (from fd or
+file2chan for ex.) while we need to read by full records (either
+separated by some delimiter or having known size).
+
+Reading from ReadBuf is blocking operation.
+
+*setsep* convert 'sep' from string to array of byte, and *reads* will use
+that array to search for separator.
+If separator will be Unicode char which may be encoded with different
+sequences of bytes, *reads* may fail to find it.
+
+*reads* return record separated by 'sep', optionally with separator
+stripped from end of record.
+Last record may not end with separator, so ReadBuf can't distinguish
+between incomplete record because of unexpected EOF and full last record
+without separator.
+Will return nil on EOF.
+Will raise on I/O error.
+Will raise if neither 'sep' nor EOF will be found in 'bufsize' bytes.
+
+*readn* return record with 'n' bytes size, or less on EOF.
+It's possible to have 'n' greater than 'bufsize'.
+Will return array with less than 'n' bytes on EOF.
+Will return nil on EOF.
+Will raise on I/O error.
+
+Arrays returned by *reads* and *readn* usually will be slices of
+ReadBuf's internal buffer, which may be overwritten on next
+*reads* or *readn* calls, so these calls may change contents of
+previously returned arrays.
+
+When ReadBuf connected to chan instead of fd, 'queuesize' define
+maximum amount of packets (not bytes!) received from chan, which
+wasn't fetched yet by *reads* or *readn*.
+
+When ReadBuf connected to chan, while one process may block in
+*reads* or *readn*, another may receive data from chan, and
+should call *fill* to put this data into ReadBuf.
+
+*fill* will either immediately send reply to 'wc' if it was able
+to add data to ReadBuf, or save pending 'data' and 'wc' in
+ReadBuf (reply to 'wc' will be sent later from process
+calling *reads* or *readn*).
+Call to *fill* never blocks.
+Will send error "concurrent writes not supported" to 'wc'
+and drop 'data' if will be called again before reply to
+previous 'wc' will be sent (i.e. when previous 'wc' is in
+pending state because of full incoming queue).
+
+Resume:
+
+* Process reading from ReadBuf doesn't need to know about
+  data source (fd or chan).
+* Process reading from ReadBuf may intermix reads() and
+  readn(), may change record separator at any time.
+* Process reading from ReadBuf receive nil on EOF or got
+  exception on I/O error.
+* Process receiving data from chan (usually, file2chan) for
+  ReadBuf just call fill() and don't bother about errors or
+  replying to 'wc'.
+
+Limitations:
+
+* Unicode separator may not be detected in some cases.
+* Offset/seek doesn't supported (so offset received with
+  file2chan request will be ignored).
+* No getb(), getc(), ungetb(), ungetc() - but they can be
+  added later.
+* Only one process may call reads() or readn() and only one
+  (another) process may call fill().
+
+=== WriteBuf
+
+WriteBuf is used when we sending stream of bytes (to fd or
+file2chan for ex.) while we want to write data by (possibly
+small) records.
+
+Writing to WriteBuf is blocking operation.
+
+*write* is adding data from 'buf' to WriteBuf. Size of 'buf' may
+be greater than 'bufsize'.
+It may call *flush*.
+Will raise on I/O error.
+
+*flush* ensure all buffered data in WriteBuf is actually written.
+Will raise on I/O error.
+
+When WriteBuf connected to chan, while one process may block in
+*write* or *flush*, another may receive read request from chan,
+and should call *request* to let *write* or *flush* send data from
+WriteBuf to chan when they'll be ready.
+
+*request* notified WriteBuf about data requested by chan, to let
+*write* or *flush* to send data from 'buf' to chan.
+Call to *request* never blocks.
+Will send error "concurrent reads not supported" to 'rc'
+if will be called again before reply to previous 'rc' will
+be sent.
+
+Resume:
+
+* Process writing to WriteBuf doesn't need to know about
+  data destination (fd or chan).
+* Process writing to WriteBuf got exception on I/O error.
+* Process receiving read requests from chan (usually, file2chan)
+  from WriteBuf just call request() and don't bother about errors
+  or replying to 'rc'.
+
+Limitations:
+
+* Offset/seek doesn't supported (so offset received with
+  file2chan request will be ignored).
+* Only one process may call write() or flush() and only one
+  (another) process may call request().
+
+
+== EXAMPLES
+
+----
+----
+
+
+== SOURCE
+
+`/opt/powerman/iobuf/appl/lib/iobuf.b`
+
+
+== SEE ALSO
+
+bufio(2)
+
+
+== BUGS
+

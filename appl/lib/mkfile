@@ -1,0 +1,20 @@
+<../../mkconfig
+
+DIRS=\
+	t\
+
+<$ROOT/mkfiles/mksubdirs
+test:V: test-$SHELLTYPE
+
+TARG=\
+	iobuf.dis\
+
+SYSMODULES=\
+	sys.m\
+
+MODULES=\
+	../../module/iobuf.m\
+
+DISBIN=../../dis/lib
+
+<$ROOT/mkfiles/mkdis
