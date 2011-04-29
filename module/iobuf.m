@@ -1,6 +1,6 @@
 IOBuf: module
 {
-	PATH: con "opt/powerman/iobuf/dis/lib/iobuf.dis";
+	PATH: con "/opt/powerman/iobuf/dis/lib/iobuf.dis";
 
 	init: fn();
 
