@@ -97,7 +97,7 @@ or
 calls, so these calls may change contents of
 previously returned arrays.
 .PP
-When ReadBuf connected to chan instead of fd, 
+When ReadBuf used with chan instead of fd, 
 .I queuesize
 define
 maximum amount of packets (not bytes!) received from chan, which
@@ -105,8 +105,9 @@ wasn't fetched yet by
 .B reads
 or 
 .BR readn .
+This is needed to optimize latency.
 .PP
-When ReadBuf connected to chan, while one process may block in
+When ReadBuf used with chan, while one process may block in
 .B reads
 or 
 .BR readn ,
@@ -202,7 +203,7 @@ Will raise on I/O error.
 ensure all buffered data in WriteBuf is actually written.
 Will raise on I/O error.
 .PP
-When WriteBuf connected to chan, while one process may block in
+When WriteBuf used with chan, while one process may block in
 .B write
 or 
 .BR flush ,

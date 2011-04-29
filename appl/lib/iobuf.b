@@ -75,6 +75,7 @@ ReadBuf.reads(r: self ref ReadBuf): array of byte
 		
 		if(r.reader(r) == 0)
 			r.is_eof = 1;
+
 	}
 }
 
@@ -133,6 +134,9 @@ chanread(r: ref ReadBuf): int
 
 ReadBuf.readn(r: self ref ReadBuf, n: int): array of byte
 {
+	if(r.is_eof)
+		return nil;
+
 	if(r.e - r.s >= n){
 		s := r.s;
 		r.s += n;
@@ -157,8 +161,10 @@ ReadBuf.readn(r: self ref ReadBuf, n: int): array of byte
 	}
 
 	while(r.e - r.s < n)
-		if(r.reader(r) == 0)
+		if(r.reader(r) == 0){
+			r.is_eof = 1;
 			n = r.e - r.s;
+		}
 	
 	if(oldbuf == nil){
 		s := r.s;
@@ -169,7 +175,7 @@ ReadBuf.readn(r: self ref ReadBuf, n: int): array of byte
 		tmp := r.buf;
 		r.buf = oldbuf;
 		r.s = r.e = 0;
-		return tmp;
+		return tmp[:n];
 	}
 }
 

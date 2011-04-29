@@ -74,11 +74,12 @@ ReadBuf's internal buffer, which may be overwritten on next
 *reads* or *readn* calls, so these calls may change contents of
 previously returned arrays.
 
-When ReadBuf connected to chan instead of fd, 'queuesize' define
+When ReadBuf used with chan instead of fd, 'queuesize' define
 maximum amount of packets (not bytes!) received from chan, which
 wasn't fetched yet by *reads* or *readn*.
+This is needed to optimize latency.
 
-When ReadBuf connected to chan, while one process may block in
+When ReadBuf used with chan, while one process may block in
 *reads* or *readn*, another may receive data from chan, and
 should call *fill* to put this data into ReadBuf.
 
@@ -130,7 +131,7 @@ Will raise on I/O error.
 *flush* ensure all buffered data in WriteBuf is actually written.
 Will raise on I/O error.
 
-When WriteBuf connected to chan, while one process may block in
+When WriteBuf used with chan, while one process may block in
 *write* or *flush*, another may receive read request from chan,
 and should call *request* to let *write* or *flush* send data from
 WriteBuf to chan when they'll be ready.

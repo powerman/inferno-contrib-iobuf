@@ -4,8 +4,6 @@ include "opt/powerman/tap/module/t.m";
 include "../../../module/iobuf.m";
 	iobuf: IOBuf;
 	ReadBuf, WriteBuf: import iobuf;
-include "string.m";
-	str: String;
 include "./share.m";
 
 test()
@@ -17,11 +15,7 @@ test()
 		bail_out(sprint("load %s: %r",IOBuf->PATH));
 	iobuf->init();
 
-	str = load String String->PATH;
-	if(str == nil)
-		bail_out(sprint("load %s: %r",String->PATH));
-
-	cmd: chan of string;
+	cmd: Cmd;
 	r: ref ReadBuf;
 	fd: ref Sys->FD;
 	buf := array[Sys->ATOMICIO] of byte;
