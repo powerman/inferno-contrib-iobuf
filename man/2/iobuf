@@ -30,8 +30,10 @@ WriteBuf: adt{
 .EE
 .SH DESCRIPTION
 .PP
-This module provide simpler alternative to 
+This module provide simpler and faster alternative to 
 .IR bufio (2).
+On reading text file it's about 30-40 times faster than bufio,
+on writing text file it's about 3-4 times faster than bufio.
 .PP
 .B init
 must be called before invoking any other operation of the module.

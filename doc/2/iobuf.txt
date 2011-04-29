@@ -37,7 +37,9 @@ WriteBuf: adt{
 
 == DESCRIPTION
 
-This module provide simpler alternative to bufio(2).
+This module provide simpler and faster alternative to bufio(2).
+On reading text file it's about 30-40 times faster than bufio,
+on writing text file it's about 3-4 times faster than bufio.
 
 *init* must be called before invoking any other operation of the module.
 
