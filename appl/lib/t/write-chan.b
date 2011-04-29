@@ -8,7 +8,7 @@ include "./share.m";
 
 test()
 {
-	plan(13);
+	plan(19);
 
 	iobuf = load IOBuf IOBuf->PATH;
 	if(iobuf == nil)
