@@ -54,6 +54,19 @@ new_buf2fd(wbufsize: int): (Cmd, ref Sys->FD)
 	return (cmd, pipe[1]);
 }
 
+new_buf2chan(wbufsize: int): (Cmd, ref WriteBuf)
+{
+	w := WriteBuf.newc(wbufsize);
+	if(w == nil)
+		raise "WriteBuf.new";
+
+	cmd := chan[16] of list of string;
+	spawn write_buf(cmd, w);
+	<-cmd;
+
+	return (cmd, w);
+}
+
 new_buf2buf(wbufsize, rbufsize: int): (Cmd, ref ReadBuf)
 {
 	(cmd, fd) := new_buf2fd(wbufsize);
@@ -88,7 +101,8 @@ write_buf(cmd: Cmd, w: ref WriteBuf)
 		l := <-cmd;
 		(op, param) := (hd l, hd tl l);
 		case op{
-		"stop" =>	exit;
+		"stop" =>	w.flush();
+				exit;
 		"sleep"	=>	sys->sleep(int param);
 		"write"	=>	w.write(array of byte param);
 		"flush" =>	w.flush();

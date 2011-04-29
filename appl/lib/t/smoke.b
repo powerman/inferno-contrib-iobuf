@@ -8,7 +8,7 @@ include "./share.m";
 
 test()
 {
-	plan(7);
+	plan(8);
 
 	iobuf = load IOBuf IOBuf->PATH;
 	if(iobuf == nil)
@@ -33,6 +33,7 @@ test()
 	eq_int(sys->read(fd, buf, len buf), 16, nil);
 	eq_int(sys->read(fd, buf, len buf),  2, nil);
 	eq_int(sys->read(fd, buf, len buf), 16, nil);
+	eq_int(sys->read(fd, buf, len buf),  4, nil);
 	eq_int(sys->read(fd, buf, len buf),  0, "EOF");
 
 	# ReadBuf

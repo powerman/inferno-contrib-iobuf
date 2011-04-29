@@ -3,8 +3,14 @@
 TARG=\
 
 TESTS=\
-	smoke.dis\
+	queue.dis\
+	readn-chan.dis\
+	readn-fd.dis\
+	reads-chan.dis\
 	reads-fd.dis\
+	smoke.dis\
+	write-chan.dis\
+	write-fd.dis\
 
 SYSMODULES=\
 	sys.m\

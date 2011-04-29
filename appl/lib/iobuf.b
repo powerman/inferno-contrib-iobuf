@@ -234,8 +234,7 @@ WriteBuf.write(w: self ref WriteBuf, buf: array of byte)
 	}
 	
 	if(len buf > n){
-		blocks := len buf / len w.buf;
-		n2 := blocks * len w.buf;
+		n2 := int((len buf - n) / len w.buf) * len w.buf;
 		if(n2 > 0){
 			tmp := w.buf;
 			w.buf = buf[n:n + n2];
@@ -249,7 +248,7 @@ WriteBuf.write(w: self ref WriteBuf, buf: array of byte)
 		w.e = len buf - n;
 	}
 
-	if(w.writer == chanwrite && w.s != w.e)
+	if(w.fd == nil && w.s != w.e)
 		optchanwrite(w);
 }
 
@@ -267,7 +266,9 @@ chanwrite(w: ref WriteBuf)
 	(n, rc) := <-w.pending;
 	if(n > w.e - w.s)
 		n = w.e - w.s;
-	rc <-= (w.buf[w.s:w.s + n], nil);
+	buf := array[n] of byte;
+	buf[0:] = w.buf[w.s:w.s + n];
+	rc <-= (buf, nil);
 	w.s += n;
 }
 
@@ -277,7 +278,9 @@ optchanwrite(w: ref WriteBuf)
 	(n, rc) := <-w.pending =>
 		if(n > w.e - w.s)
 			n = w.e - w.s;
-		rc <-= (w.buf[w.s:w.s + n], nil);
+		buf := array[n] of byte;
+		buf[0:] = w.buf[w.s:w.s + n];
+		rc <-= (buf, nil);
 		w.s += n;
 	* =>
 		;
@@ -288,6 +291,7 @@ WriteBuf.flush(w: self ref WriteBuf)
 {
 	while(w.s != w.e)
 		w.writer(w);
+	w.s = w.e = 0;
 }
 
 WriteBuf.request(w: self ref WriteBuf, n: int, rc: Sys->Rread)
