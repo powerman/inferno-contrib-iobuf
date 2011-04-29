@@ -4,6 +4,7 @@ TARG=\
 
 TESTS=\
 	smoke.dis\
+	reads-fd.dis\
 
 SYSMODULES=\
 	sys.m\

@@ -4,26 +4,26 @@ include "opt/powerman/tap/module/t.m";
 include "../../../module/iobuf.m";
 	iobuf: IOBuf;
 	ReadBuf, WriteBuf: import iobuf;
+include "string.m";
+	str: String;
+include "./share.m";
 
 test()
 {
-	plan(16);
+	plan(30);
 
 	iobuf = load IOBuf IOBuf->PATH;
 	if(iobuf == nil)
 		bail_out(sprint("load %s: %r",IOBuf->PATH));
 	iobuf->init();
 	
-	pipe := array[2] of ref Sys->FD;
-	if(sys->pipe(pipe) == -1)
-		raise sprint("pipe:%r");
-	
-	spawn writer(pipe[0], sync := chan of string);
-	<-sync;
-	pipe[0] = nil;
+	str = load String String->PATH;
+	if(str == nil)
+		bail_out(sprint("load %s: %r",String->PATH));
 
-	r := ReadBuf.new(pipe[1], 16);
-	ok(r != nil, "ReadBuf.new");
+	cmd: chan of string;
+	r: ref ReadBuf;
+	a: array of byte;
 
 	# separators:
 	# - default
@@ -32,84 +32,88 @@ test()
 	#   * stripped
 	#   * non-stripped
 	# - multi-byte
+	# - optional separator before EOF
+	# - no separator found in full buffer
 	
-	# reads:
-	# - first reads() blocks until read data into buffer
-	# - next reads() return data from buffer
-	# - next reads() keep incomplete data tail and blocks/read more
-	# - next read return last record
-	#   * ending with separator
-	#   * not ending with separator
-	# - next read return eof
-	# - check "iobuf:no separator found in full buffer"
-	
-	t0: int;
-	ex: string;
-	a: array of byte;
-	s: string;
+	(cmd, r) = new_fd2buf(16);
 
-	t0 = sys->millisec();
-	spawn writeafter(100, sync, "123456\n7890\n1234567");
-	s = string r.reads();
-	ok(sys->millisec() - t0 >= 100, "reads blocked");
-	eq(s, "123456", "123456");
+	send(cmd, "write", "line 1\nline 2\nline 3\nline 4\n");
+	eq(string r.reads(), "line 1", nil);
+	eq(string r.reads(), "line 2", nil);
 
-	t0 = sys->millisec();
-	s = string r.reads();
-	ok(sys->millisec() - t0 < 50, "reads not blocked");
-	eq(s, "7890", "7890");
+	{ r.setsep("", 1); } exception e { "*" => catched(e); }
+	raised("iobuf:empty separator", nil);
 
-	sync <-= "8901234567";
-	ex = nil;
-	{ r.reads(); } exception e { "*" => ex = e; }
-	eq(ex, "iobuf:no separator found in full buffer", "iobuf:no separator found in full buffer");
+	r.setsep("\n", 0);
+	eq(string r.reads(), "line 3\n", nil);
+	eq(string r.reads(), "line 4\n", nil);
 
-	r.setsep("0", 0);
-	s = string r.reads();
-	eq(s, "1234567890", "1234567890");
+	send(cmd, "write", "12345678901234567890");
+	r.setsep("56", 0);
+	{ r.reads(); } exception e { "*" => catched(e); }
+	raised("iobuf:multibyte separator not implemented yet", nil);
 
-	ex = nil;
-	{ r.setsep("", 1); } exception e { "*" => ex = e; }
-	eq(ex, "iobuf:empty separator", "iobuf:empty separator");
-	r.setsep("\n", 1);
+	send(cmd, "stop", nil);
+	r.setsep("7", 0);
+	eq(string r.reads(), "1234567", nil);
+	eq(string r.reads(), "8901234567", nil);
+	eq(string r.reads(), "890", "890 (no separator before EOF)");
+	ok(r.reads() == nil, "EOF");
 
-	t0 = sys->millisec();
-	spawn writeafter(100, sync, "\n\n123");
-	s = string r.reads();
-	ok(sys->millisec() - t0 >= 100, "reads blocked");
-	eq(s, "1234567", "1234567");
+	(cmd, r) = new_fd2buf(16);
+	send(cmd, "write", "12345678901234567");
+	send(cmd, "stop", nil);
+	r.setsep("7", 0);
+	eq(string r.reads(), "1234567", nil);
+	eq(string r.reads(), "8901234567", nil);
+	ok(r.reads() == nil, "EOF");
 
+	(cmd, r) = new_fd2buf(16);
+	send(cmd, "write", "12345678901234567");
+	{ r.reads(); } exception e { "*" => catched(e); }
+	raised("iobuf:no separator found in full buffer", nil);
+	send(cmd, "stop", nil);
+
+	# read:
+	# - block until read data into buffer
+	# - return data from buffer
+	# - keep data leftover in buffer and block until read more data
+	# - block until got EOF and return data leftover
+	# - return EOF on next reads
+
+	(cmd, r) = new_fd2buf(16);
+
+	stopwatch_start();
+	send(cmd, "sleep", "100");
+	send(cmd, "write", "123456\n7890\n1234567");
+
+	eq(string r.reads(), "123456", nil);
+	stopwatch_min(100, "block until read data into buffer");
+
+	eq(string r.reads(), "7890", nil);
+	stopwatch_max(50, "return data from buffer");
+
+	send(cmd, "sleep", "100");
+	send(cmd, "write", "890\n1234567");
+	eq(string r.reads(), "1234567890", "keep data leftover in buffer");
+	stopwatch_min(100, "block until read more data");
+
+	send(cmd, "write", "\n\n890");
+	eq(string r.reads(), "1234567", nil);
+	stopwatch_max(50, "return data from buffer");
 	a = r.reads();
-	ok(a != nil, "not EOF yet");
-	eq(string a, "", "empty string");
+	ok(a != nil, "not EOF");
+	eq(string a, "", nil);
+	stopwatch_max(50, "return data from buffer");
 
-	sync <-= "";
-
+	send(cmd, "sleep", "100");
+	send(cmd, "stop", nil);
 	a = r.reads();
-	ok(a != nil, "not EOF yet");
-	eq(string a, "123", "123");
+	ok(a != nil, "not EOF");
+	eq(string a, "890", "return data leftover");
+	stopwatch_min(100, "block until got EOF");
 
-	a = r.reads();
-	ok(a == nil, "EOF");
-
-	a = r.reads();
-	ok(a == nil, "EOF again");
-}
-
-writeafter(delay: int, sync: chan of string, s: string)
-{
-	sys->sleep(delay);
-	sync <-= s;
-}
-
-writer(fd: ref Sys->FD, sync: chan of string)
-{
-	sync <-= "";
-	for(;;){
-		a := array of byte <-sync;
-		if(len a == 0)
-			break;
-		sys->write(fd, a, len a);
-	}
+	ok(r.reads() == nil, "EOF");
+	ok(r.reads() == nil, "EOF again");
 }
 
