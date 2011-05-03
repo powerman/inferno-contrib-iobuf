@@ -105,6 +105,7 @@ write_buf(cmd: Cmd, w: ref WriteBuf)
 				exit;
 		"sleep"	=>	sys->sleep(int param);
 		"write"	=>	w.write(array of byte param);
+		"writeln" =>	w.writeln(array of byte param);
 		"flush" =>	w.flush();
 		* =>		diag("unknown cmd: "+op);
 		}

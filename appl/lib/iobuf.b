@@ -5,10 +5,13 @@ include	"sys.m";
 	sprint: import sys;
 include "../../module/iobuf.m";
 
+LF: array of byte;
 
 init()
 {
 	sys = load Sys Sys->PATH;
+
+	LF = array[] of { byte '\n' };
 }
 
 ReadBuf.new(fd: ref Sys->FD, bufsize: int): ref ReadBuf
@@ -250,6 +253,12 @@ WriteBuf.write(w: self ref WriteBuf, buf: array of byte)
 
 	if(w.fd == nil && w.s != w.e)
 		optchanwrite(w);
+}
+
+WriteBuf.writeln(w: self ref WriteBuf, buf: array of byte)
+{
+	w.write(buf);
+	w.write(LF);
 }
 
 syswrite(w: ref WriteBuf)

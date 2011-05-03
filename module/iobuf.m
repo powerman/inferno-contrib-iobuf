@@ -30,6 +30,7 @@ IOBuf: module
 		new:		fn(fd: ref Sys->FD, bufsize: int): ref WriteBuf;
 		newc:		fn(bufsize: int): ref WriteBuf;
 		write:		fn(w: self ref WriteBuf, buf: array of byte);
+		writeln:	fn(w: self ref WriteBuf, buf: array of byte);
 		flush:		fn(w: self ref WriteBuf);
 		request:	fn(w: self ref WriteBuf, n: int, rc: Sys->Rread);
 		# Internal:
