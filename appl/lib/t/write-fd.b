@@ -8,7 +8,7 @@ include "./share.m";
 
 test()
 {
-	plan(16);
+	plan(18);
 
 	iobuf = load IOBuf IOBuf->PATH;
 	if(iobuf == nil)
@@ -74,6 +74,18 @@ test()
 	}
 	send(cmd, "flush", nil);
 	eq(string <-readc, "123456\n7890\n", nil);
+
+	# eof:
+
+	(cmd, fd) = new_buf2fd(16);
+	spawn reader(fd, readc);
+
+	send(cmd, "write",   "123");
+	send(cmd, "eof", nil);
+	send(cmd, "write",   "456");
+	send(cmd, "flush", nil);
+	eq(string <-readc, "123", "eof do flush…");
+	eq(string <-readc, "456", "…and returns");
 
 	# large write:
 	# - buffer empty, write n*bufsize written at once

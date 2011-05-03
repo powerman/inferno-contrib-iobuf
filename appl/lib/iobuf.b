@@ -273,6 +273,8 @@ syswrite(w: ref WriteBuf)
 chanwrite(w: ref WriteBuf)
 {
 	(n, rc) := <-w.pending;
+	if(rc == nil)
+		raise "iobuf:broken pipe";
 	if(n > w.e - w.s)
 		n = w.e - w.s;
 	buf := array[n] of byte;
@@ -285,6 +287,8 @@ optchanwrite(w: ref WriteBuf)
 {
 	alt{
 	(n, rc) := <-w.pending =>
+		if(rc == nil)
+			raise "iobuf:broken pipe";
 		if(n > w.e - w.s)
 			n = w.e - w.s;
 		buf := array[n] of byte;
@@ -303,13 +307,27 @@ WriteBuf.flush(w: self ref WriteBuf)
 	w.s = w.e = 0;
 }
 
+WriteBuf.eof(w: self ref WriteBuf)
+{
+	w.flush();
+	if(w.fd != nil)
+		return;
+	for(;;){	
+		(nil, rc) := <-w.pending;
+		if(rc == nil)
+			break;
+		rc <-= (nil, nil);
+	}
+}
+
 WriteBuf.request(w: self ref WriteBuf, n: int, rc: Sys->Rread)
 {
 	alt{
 	w.pending <-= (n, rc) =>
 		;
 	* =>
-		rc <-= (nil, "concurrent reads not supported");
+		if(rc != nil)
+			rc <-= (nil, "concurrent reads not supported");
 	}
 }
 

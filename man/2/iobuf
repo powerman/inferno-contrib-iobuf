@@ -24,6 +24,7 @@ WriteBuf: adt{
         newc:           fn(bufsize: int): ref WriteBuf;
         write:          fn(w: self ref WriteBuf, buf: array of byte);
         flush:          fn(w: self ref WriteBuf);
+        eof:            fn(w: self ref WriteBuf);
         request:        fn(w: self ref WriteBuf, n: int, rc: Sys->Rread);
 }
 
@@ -218,6 +219,22 @@ or
 .B flush
 send data from
 WriteBuf to chan when they'll be ready.
+.PP
+.B eof
+calls 
+.BR flush ,
+but what it does next depends on WriteBuf type.
+When WriteBuf used with fd, it do nothing more and just returns.
+When WriteBuf used with chan, it'll wait for next 
+.B request
+and will reply
+on all with EOF 
+.BI ( "" nil "" , "" nil "" )
+, and will returns only after got 
+.B request
+with 
+.B nil
+.IR rc .
 .PP
 .B request
 notified WriteBuf about data requested by chan, to let

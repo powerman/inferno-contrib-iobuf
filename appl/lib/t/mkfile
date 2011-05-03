@@ -19,6 +19,7 @@ SYSMODULES=\
 
 MODULES=\
 	../../../module/iobuf.m\
+	./share.m\
 
 <../../../../tap/mktest
 LIMBOFLAGS=$LIMBOFLAGS -I$INFERNO_HOME

@@ -101,12 +101,13 @@ write_buf(cmd: Cmd, w: ref WriteBuf)
 		l := <-cmd;
 		(op, param) := (hd l, hd tl l);
 		case op{
-		"stop" =>	w.flush();
+		"stop" =>	w.eof();
 				exit;
 		"sleep"	=>	sys->sleep(int param);
 		"write"	=>	w.write(array of byte param);
 		"writeln" =>	w.writeln(array of byte param);
 		"flush" =>	w.flush();
+		"eof" =>	w.eof();
 		* =>		diag("unknown cmd: "+op);
 		}
 	}

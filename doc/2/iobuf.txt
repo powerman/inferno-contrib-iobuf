@@ -30,6 +30,7 @@ WriteBuf: adt{
 	newc:		fn(bufsize: int): ref WriteBuf;
 	write:		fn(w: self ref WriteBuf, buf: array of byte);
 	flush:		fn(w: self ref WriteBuf);
+	eof:		fn(w: self ref WriteBuf);
 	request:	fn(w: self ref WriteBuf, n: int, rc: Sys->Rread);
 }
 ----
@@ -137,6 +138,12 @@ When WriteBuf used with chan, while one process may block in
 *write* or *flush*, another may receive read request from chan,
 and should call *request* to let *write* or *flush* send data from
 WriteBuf to chan when they'll be ready.
+
+*eof* calls *flush*, but what it does next depends on WriteBuf type.
+When WriteBuf used with fd, it do nothing more and just returns.
+When WriteBuf used with chan, it'll wait for next *request* and will reply
+on all with EOF *(nil,nil)*, and will returns only after got *request*
+with *nil* 'rc'.
 
 *request* notified WriteBuf about data requested by chan, to let
 *write* or *flush* to send data from 'buf' to chan.

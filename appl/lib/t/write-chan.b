@@ -8,7 +8,7 @@ include "./share.m";
 
 test()
 {
-	plan(21);
+	plan(25);
 
 	iobuf = load IOBuf IOBuf->PATH;
 	if(iobuf == nil)
@@ -77,6 +77,25 @@ test()
 	}
 	send(cmd, "flush", nil);
 	eq(string <-readc, "123456\n7890\n", nil);
+
+	# eof:
+
+	(cmd, w) = new_buf2chan(16);
+	readc = chan[16] of array of byte;
+
+	send(cmd, "write",   "123");
+	send(cmd, "eof", nil);
+	send(cmd, "write",   "456");
+	send(cmd, "flush", nil);
+	spawn reader(50, w, readc);
+	eq(string <-readc, "123", "eof flush buffer");
+	spawn reader(50, w, readc);
+	eq(string <-readc, nil, "…and return EOF");
+	spawn reader(50, w, readc);
+	eq(string <-readc, nil, "…on all next requests");
+	reader_gone(w);
+	spawn reader(50, w, readc);
+	eq(string <-readc, "456", "…and returns after reader gone");
 
 	# large write:
 	# - buffer empty, write n*bufsize written at once
@@ -160,4 +179,9 @@ reader2(n: int, w: ref WriteBuf, readc: chan of array of byte)
 	rc := chan of (array of byte, string);
 	w.request(n, rc);
 	readc <-= (<-rc).t0;
+}
+
+reader_gone(w: ref WriteBuf)
+{
+	w.request(0, nil);
 }
