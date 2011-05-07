@@ -11,6 +11,7 @@ TESTS=\
 	smoke.dis\
 	write-chan.dis\
 	write-fd.dis\
+	write-file2chan.dis\
 	write-epipe.dis\
 
 SYSMODULES=\

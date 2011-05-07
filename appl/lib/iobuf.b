@@ -322,12 +322,14 @@ WriteBuf.eof(w: self ref WriteBuf)
 
 WriteBuf.request(w: self ref WriteBuf, n: int, rc: Sys->Rread)
 {
+	if(rc == nil)
+		alt{
+		<-w.pending => ;
+		* => ;
+		}
 	alt{
-	w.pending <-= (n, rc) =>
-		;
-	* =>
-		if(rc != nil)
-			rc <-= (nil, "concurrent reads not supported");
+	w.pending <-= (n, rc) =>;
+	* =>			rc <-= (nil, "concurrent reads not supported");
 	}
 }
 
