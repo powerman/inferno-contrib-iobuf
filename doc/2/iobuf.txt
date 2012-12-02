@@ -3,7 +3,7 @@ IOBUF(2)
 
 == NAME
 
-iobuf - read/write buffers
+ReadBuf, WriteBuf - read/write buffers
 
 
 == SYNOPSIS

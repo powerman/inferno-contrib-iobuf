@@ -1,0 +1,37 @@
+install:V:		indices
+
+indices:V:		${MANTARG:%=sect-$OSTARG-%}
+
+sect-os-([1-9]|10)/.*:RV:	\\1/INDEX
+
+sect-Inferno-([1-9]|10)/.*:RV:	\1/INDEX
+
+%/INDEX:Q:		tool-$OSTARG
+	echo "Generating $stem/INDEX"
+	if cd $stem 2>/dev/null; then
+	    sleep 1	# make sure INDEX's date will be later than $MANTARG
+	    perl -0777 -ne '
+		next if $ARGV eq "INDEX";
+		s/\A.*?^\.SH\s+NAME\s*\n(.*?)^\.SH\s.*/$1/ms;
+		s/(?:\s|\\)-.*//ms;
+		$f=$ARGV;
+		$f=~s/0intro/intro/ms;
+		print "$_ $ARGV\n" for sort map {lc} $f, /([\w\/!~.-]+)/msg;
+		' * | uniq >INDEX
+	fi
+
+tool-os:VQ:		$MANTARG
+	# perl usually available
+
+tool-Inferno:VQ:	$MANTARG
+	echo 'Require perl (run mk install in host os)'
+	raise 'not implemented'
+
+nuke:V:			nuke-indices
+
+nuke-indices:V:
+	rm -f */INDEX
+
+test:VQ:
+	# no tests
+
