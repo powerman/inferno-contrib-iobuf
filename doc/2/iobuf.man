@@ -1,6 +1,6 @@
 .TH IOBUF 2
 .SH NAME
-ReadBuf, WriteBuf \- read/write buffers
+iobuf: ReadBuf, WriteBuf \- read/write buffers
 .SH SYNOPSIS
 .EX
 include "iobuf.m";

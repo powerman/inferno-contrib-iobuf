@@ -1,6 +1,8 @@
-<$ROOT/mkconfig
+PKGDIR=..
+<$PKGDIR/mkconfig
 
-MANTARG=\
-	2/iobuf\
 
-<mkindices
+MANDIRS=\
+	2\
+
+<$MKFILES/mkindices

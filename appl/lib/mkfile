@@ -1,10 +1,14 @@
-<../../mkconfig
+PKGDIR=../..
+<$PKGDIR/mkconfig
+
 
 DIRS=\
 	t\
 
-<$ROOT/mkfiles/mksubdirs
-test:V: test-$SHELLTYPE
+<$MKFILES/mksubdirs
+
+
+DISBIN=$PKGDIR/dis/lib
 
 TARG=\
 	iobuf.dis\
@@ -12,9 +16,9 @@ TARG=\
 SYSMODULES=\
 	sys.m\
 
+OPTMODULES=\
+
 MODULES=\
-	../../module/iobuf.m\
+	$PKGDIR/module/iobuf.m\
 
-DISBIN=../../dis/lib
-
-<$ROOT/mkfiles/mkdis
+<$MKFILES/mkdis

@@ -1,6 +1,6 @@
-<../../../mkconfig
+PKGDIR=../../..
+<$PKGDIR/mkconfig
 
-TARG=\
 
 TESTS=\
 	queue.dis\
@@ -14,14 +14,18 @@ TESTS=\
 	write-file2chan.dis\
 	write-epipe.dis\
 
+TESTTARG=\
+
 SYSMODULES=\
 	sys.m\
 	draw.m\
-	arg.m\
+
+OPTMODULES=\
+	opt/powerman/tap/module/t.m\
+	opt/powerman/tap/module/tap.m\
 
 MODULES=\
-	../../../module/iobuf.m\
-	./share.m\
+	$PKGDIR/module/iobuf.m\
+	$PKGDIR/appl/lib/t/share.m\
 
-<../../../../tap/mktest
-LIMBOFLAGS=$LIMBOFLAGS -I$INFERNO_HOME
+<$MKFILES/mktest

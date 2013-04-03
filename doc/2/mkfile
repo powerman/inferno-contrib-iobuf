@@ -1,8 +1,10 @@
-<$ROOT/mkconfig
+PKGDIR=../..
+<$PKGDIR/mkconfig
 
-MANINSTDIR=../../man/2
+
+MANDIR=$PKGDIR/man/2
 
 MANTARG=\
 	iobuf\
 
-<mkasciidoc
+<$MKFILES/mkasciidoc
