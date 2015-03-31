@@ -1,14 +1,30 @@
+# Description
+
 This module provide simpler alternative to bufio(2).
 
-Dependencies:
-  * http://code.google.com/p/inferno-opt-mkfiles/
 
-# Install #
+# Install
+
+Make directory with this module available in /opt/powerman/iobuf/, for ex.:
 
 ```
-cd $INFERNO_ROOT/opt
-mkdir -p powerman
-hg clone https://inferno-contrib-iobuf.googlecode.com/hg/ powerman/iobuf
+# git clone https://github.com/powerman/inferno-contrib-iobuf.git $INFERNO_ROOT/opt/powerman/iobuf
 ```
 
-After starting emu run /opt/setup.sh to install all /opt packages (you can download it from http://code.google.com/p/inferno-os/issues/detail?id=261).
+or in user home directory:
+
+```
+$ git clone https://github.com/powerman/inferno-contrib-iobuf.git $INFERNO_USER_HOME/opt/powerman/iobuf
+$ emu
+; bind opt /opt
+```
+
+If you want to run commands and read man pages without entering full path
+to them (like `/opt/VENDOR/APP/dis/cmd/NAME`) you should also install and
+use https://github.com/powerman/inferno-opt-setup 
+
+## Dependencies
+
+* https://github.com/powerman/inferno-opt-mkfiles
+
+
